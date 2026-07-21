@@ -2,13 +2,17 @@
 
 **Core concept:** DOM manipulation + **event delegation**
 
+🔗 **Live Demo:** `https://your-vercel-project-name.vercel.app`
+
+A simple Todo List built with HTML, CSS, and Vanilla JavaScript.
+
 ## Run it
 
 Just open `index.html` in a browser. No build step, no dependencies.
 
 ## Run the tests
 
-```
+```bash
 npm test
 ```
 
@@ -16,7 +20,7 @@ Uses Node's built-in test runner (`node --test`) — nothing to install.
 
 ## File structure
 
-```
+```text
 index.html      — markup only, no logic
 style.css       — styling
 todoLogic.js    — pure functions (addTodo, removeTodo, toggleTodo). No DOM access.
@@ -27,41 +31,17 @@ tests/
 ```
 
 The split between `todoLogic.js` (pure) and `script.js` (DOM) is intentional.
-Logic that only transforms data is trivial to unit test. Logic that touches
-the DOM is not — you'd need a fake browser environment (jsdom, happy-dom,
-etc.) to test it directly. Separating the two means most of your app's real
-logic can be tested without any of that setup.
 
 ## What to actually pay attention to while reading the code
 
 1. **Event delegation** (`script.js`, the `list.addEventListener("click", ...)` block)
-   One listener on the parent `<ul>` handles clicks for *every* `<li>`,
-   including ones that don't exist yet at page load. Compare `event.target`
-   (what was clicked) against `event.currentTarget` (what the listener is
-   attached to) — these are different things, and confusing them is the most
-   common bug in delegated event handling.
 
 2. **Immutability** (`todoLogic.js`)
-   Every function returns a *new* array instead of mutating the one passed
-   in (`filter`/`map`/spread, never `push`/`splice` directly on the input).
-   Run the "does not mutate the original array" tests and read them closely —
-   this pattern is required if you ever want undo/redo, and it's exactly how
-   React expects you to update state.
 
 3. **XSS guard** (`script.js`, `escapeHTML`)
-   Try removing the `escapeHTML()` call and typing
-   `<img src=x onerror=alert(1)>` into the input. Watch what happens with
-   and without the guard. This is a real vulnerability class (stored XSS),
-   not a toy problem.
 
-## Stretch goals (optional, once the above feels easy)
+## Stretch goals
 
-- **Persistence:** save `todos` to `localStorage` on every change, and load
-  it back on page refresh. Watch out for `JSON.stringify` silently dropping
-  things like `undefined` — a preview of Day 8.
-- **Keyboard support:** let `Escape` clear the input, and focus the input
-  automatically after adding a todo.
-- **Avoid full re-render:** right now `render()` wipes and rebuilds the
-  entire `<ul>` on every change. Try only updating the specific `<li>` that
-  changed instead of all of them. This is the exact problem a virtual DOM
-  solves — Day 10 of this plan builds a small one from scratch.
+* **Persistence:** save `todos` to `localStorage`
+* **Keyboard support:** let `Escape` clear the input
+* **Avoid full re-render:** update only the specific `<li>` that changed
