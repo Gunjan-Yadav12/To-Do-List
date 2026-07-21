@@ -1,0 +1,10 @@
+{
+  "name": "day1-todo-list",
+  "version": "1.0.0",
+  "description": "Day 1 of a 10-day JS learning plan — DOM manipulation and event delegation",
+  "main": "script.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

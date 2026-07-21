@@ -1,0 +1,315 @@
+/* ============================================================
+   DESIGN TOKENS
+   Centralizing colors/fonts as custom properties (CSS variables)
+   means every other rule below references *meaning* ("--ink")
+   instead of a raw value ("#232821"). Change the palette in one
+   place and the whole page updates.
+   ============================================================ */
+:root {
+  --paper: #f6f4ee;       /* page background — warm off-white, not stark white */
+  --paper-line: #e2ddcd;  /* ruled lines, like a notebook page */
+  --ink: #232821;         /* primary text — near-black with a green cast */
+  --ink-soft: #6b7268;    /* secondary/muted text */
+  --accent: #2f6f4e;      /* forest green — the interactive color */
+  --accent-soft: #e4efe6; /* pale green — hover/focus backgrounds */
+  --danger: #a8442c;      /* muted rust — used ONLY for delete, sparingly */
+
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --font-sans: "Work Sans", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 56px 16px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  display: flex;
+  justify-content: center;
+  /* Very faint dot grid, like graph/notebook paper. Purely decorative,
+     so it's a background-image rather than real DOM elements. */
+  background-image: radial-gradient(var(--paper-line) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ============================================================
+   LEDGER SHELL
+   ============================================================ */
+.ledger {
+  width: 100%;
+  max-width: 460px;
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: 10px;
+  padding: 28px 28px 20px;
+  box-shadow: 0 1px 0 rgba(35, 40, 33, 0.03);
+}
+
+.ledger-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--paper-line);
+  margin-bottom: 18px;
+}
+
+.ledger-header h1 {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   ENTRY ROW (the add-task form)
+   ============================================================ */
+.entry-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+#todo-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--paper-line);
+  border-radius: 6px;
+  background: white;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+#todo-input::placeholder {
+  color: var(--ink-soft);
+}
+
+/* :focus-visible instead of :focus — this shows the focus ring for
+   keyboard navigation (Tab key) but not for mouse clicks, which is
+   what people actually expect. Plain :focus shows the ring on every
+   click too, which most users find visually noisy. */
+#todo-input:focus-visible,
+.entry-row button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.entry-row button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.entry-row button:hover {
+  background: #255c40;
+}
+
+/* ============================================================
+   LEDGER LIST — numbered entries via CSS counters
+   `counter-reset` starts a named counter at 0 on the <ul>.
+   Each .entry then calls `counter-increment` once, and its
+   ::before pseudo-element renders the running total. No JS
+   needed to keep the numbers correct as items are added/removed.
+   ============================================================ */
+.ledger-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: entry;
+}
+
+.entry {
+  counter-increment: entry;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--paper-line);
+}
+
+.entry:last-child {
+  border-bottom: none;
+}
+
+.entry::before {
+  content: counter(entry, decimal-leading-zero); /* → 01, 02, 03... */
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.todo-text {
+  flex: 1;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* ============================================================
+   CUSTOM CHECKBOX — the signature element.
+   The real <input type="checkbox"> still exists for accessibility
+   and keyboard support, but it's visually hidden. What the user
+   sees is an SVG square + checkmark path that we control fully,
+   including animating the check with a stroke-draw effect.
+   ============================================================ */
+.check {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.check-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.check-box {
+  width: 22px;
+  height: 22px;
+  pointer-events: none; /* clicks pass through to the real input above */
+}
+
+.check-box-bg {
+  fill: white;
+  stroke: var(--paper-line);
+  stroke-width: 1.5;
+  transition: stroke 0.15s ease, fill 0.15s ease;
+}
+
+.check-mark {
+  fill: none;
+  stroke: white;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* stroke-dasharray/-offset trick: set the dash length equal to the
+     path's total length, then offset it by that same amount so the
+     line starts fully "hidden". Animating offset back to 0 makes it
+     look hand-drawn instead of just appearing. length ≈ 24 for this
+     path, measured by trial. */
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transition: stroke-dashoffset 0.25s ease;
+}
+
+/* Keyboard focus ring on the real (hidden) input still needs to be
+   visible somewhere — we draw it around the SVG box instead. */
+.check-input:focus-visible ~ .check-box .check-box-bg {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.check-input:checked ~ .check-box .check-box-bg {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.check-input:checked ~ .check-box .check-mark {
+  stroke-dashoffset: 0; /* draws the checkmark in */
+}
+
+.entry.completed .todo-text {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-soft);
+}
+
+/* ============================================================
+   DELETE BUTTON
+   ============================================================ */
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+/* Only reveal the delete button when hovering the row it belongs to,
+   or when it has keyboard focus (so it's not keyboard-inaccessible). */
+.entry:hover .delete-btn,
+.delete-btn:focus-visible {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  color: var(--danger);
+  background: rgba(168, 68, 44, 0.08);
+}
+
+.delete-btn:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  padding: 18px 0 4px;
+}
+
+.empty-state.hidden {
+  display: none;
+}
+
+/* ============================================================
+   RESPONSIVE — collapse padding on small screens
+   ============================================================ */
+@media (max-width: 480px) {
+  body {
+    padding: 24px 12px;
+  }
+  .ledger {
+    padding: 20px 18px 14px;
+  }
+}
+
+/* ============================================================
+   ACCESSIBILITY — respect the user's OS-level motion preference.
+   Some people get real physical discomfort (dizziness, nausea)
+   from animation. This media query lets us strip it out for them
+   without removing the feature for everyone else.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .check-mark,
+  .entry-row button,
+  .delete-btn {
+    transition: none;
+  }
+}
